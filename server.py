@@ -1,3 +1,5 @@
+import os
+import subprocess
 from flask import Flask, jsonify, request
 
 from utils import verify_signature
@@ -54,12 +56,23 @@ def trigger_build():
         dependency_change_commits = [commit for commit in commits
                                      if 'package.json' in commit['modified']]
 
-        # if len(dependency_change_commits) > 0:
-        #     ~/deploy -d <project_name>
-        # else:
-        #     ~/deploy <project_name>
+        # take directory of deploy script from environment variable
+        command_params = [os.environ.get('DEPLOY_SCRIPT_DIR')]
 
-        return (jsonify({'msg': 'Build success'}), 200)
+        # append command params, add -d flag if npm dependency changes exist
+        if len(dependency_change_commits) > 1:
+            command_params.append('-d')
+        command_params.append(project_name)
+
+        # TODO: Add logging
+        try:
+            cmd_output = subprocess.check_output(command_params,)
+            return (jsonify({
+                'msg': 'Build success',
+                'output': cmd_output.decode('utf-8')
+            }), 200)
+        except subprocess.CalledProcessError as error:
+            return (jsonify({'msg': error.output.decode('utf-8')}), 400)
 
     return (jsonify({'msg': 'Valid, but push not in master branch'}), 200)
 

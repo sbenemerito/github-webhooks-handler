@@ -1,5 +1,7 @@
 import os
-from flask import Flask, request
+from flask import Flask, jsonify, request
+
+from utils import verify_signature
 
 app = Flask(__name__)
 
@@ -20,10 +22,20 @@ def trigger_build():
 
     Events: https://developer.github.com/webhooks/#events
     """
-    data = request.get_json()
-    # run deploy scripts here
+    data = request.get_data()
+    delivery_id = request.headers.get('X-Github-Delivery')
+    event = request.headers.get('X-Github-Event')
+    signature = request.headers.get('X-Hub-Signature')
 
-    return (data, 200, None)  # temporarily just return received data
+    if event == 'push':
+        if not verify_signature(data, signature):
+            return (jsonify({ 'msg': 'Hash signatures do not match' }), 400)
+
+        # run deploy scripts here
+
+        return (jsonify({ 'msg': 'Build success' }), 200)
+
+    return (jsonify({ 'msg': 'Payload received' }), 200)
 
 
 if __name__ == '__main__':

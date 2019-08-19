@@ -2,3 +2,4 @@ instance/
 .webassets-cache
 .env
 env/
+__pycache__/

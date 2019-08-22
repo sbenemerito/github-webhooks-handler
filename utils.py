@@ -2,6 +2,8 @@ import os
 import hashlib
 import hmac
 
+from decouple import config
+
 
 def verify_signature(data, signature):
     """
@@ -11,6 +13,7 @@ def verify_signature(data, signature):
 
     Validating payloads: https://developer.github.com/webhooks/securing/
     """
-    secret_token = bytes(os.environ.get('SECRET_TOKEN'), 'utf-8')
+    secret_token = bytes(config('SECRET_TOKEN', 'defaulttoken'), 'utf-8')
     auth_code = hmac.new(secret_token, msg=data, digestmod=hashlib.sha1)
     return hmac.compare_digest('sha1=' + auth_code.hexdigest(), signature)
+

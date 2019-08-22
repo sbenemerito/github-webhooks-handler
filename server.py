@@ -1,5 +1,6 @@
 import os
 import subprocess
+from decouple import config
 from flask import Flask, jsonify, request
 
 from utils import verify_signature
@@ -57,7 +58,8 @@ def trigger_build():
                                      if 'package.json' in commit['modified']]
 
         # take directory of deploy script from environment variable
-        command_params = [os.environ.get('DEPLOY_SCRIPT_DIR')]
+        default_script_dir = os.path.join(os.getcwd(), 'deploy.sh')
+        command_params = [config('DEPLOY_SCRIPT_DIR', default_script_dir)]
 
         # append command params, add -d flag if npm dependency changes exist
         if len(dependency_change_commits) > 1:
